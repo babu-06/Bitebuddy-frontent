@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:8080/api/orders";
+const API_BASE_URL = "https://bitebuddy-production.up.railway.app/api/orders";
 
 function getLoggedInUsername() {
     const params = new URLSearchParams(window.location.search);

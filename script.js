@@ -3,7 +3,7 @@ async function login() {
     const pass = document.getElementById("password").value;
 
     try {
-        const response = await fetch("http://localhost:8080/api/customer/login", {
+        const response = await fetch("https://bitebuddy-production.up.railway.app/api/customer/login", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
