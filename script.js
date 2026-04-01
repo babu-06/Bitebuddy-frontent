@@ -1,5 +1,5 @@
 async function login() {
-    const user1 = document.getElementById("username").value;
+    const user1 = document.getElementById("username").value.trim();
     const pass = document.getElementById("password").value;
 
     try {
