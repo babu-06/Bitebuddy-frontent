@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BiteBuddy Login</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="shortcut icon" href="https://res.cloudinary.com/dn5wb46jl/image/upload/v1774414028/icon_qrqwhg.jpg">
+<link rel="stylesheet" href="style.css">
+<script src="script.js" defer></script>
+</head>
+<body class="auth-body">
+<div class="auth-backdrop"></div>
+<div class="stars" id="stars"></div>
+
+<main class="auth-frame">
+    <section class="auth-grid">
+        <div class="auth-copy">
+            <div class="auth-kicker">Coastal delivery, reimagined</div>
+            <p class="brand">BiteBuddy</p>
+            <h1>Fresh seafood with a sharper storefront.</h1>
+            <p>Login to browse daily catches, premium cuts, fast delivery windows, and a cleaner ordering flow across the whole BiteBuddy experience.</p>
+            <div class="auth-points">
+                <div class="auth-point">Curated fish, prawns, crab, and squid</div>
+                <div class="auth-point">Fast order flow from menu to doorstep</div>
+                <div class="auth-point">Designed to feel premium on mobile and desktop</div>
+            </div>
+        </div>
+
+        <div class="auth-panel">
+            <div>
+                <h2>Welcome back</h2>
+                <p class="auth-subtitle">Use your BiteBuddy account to continue ordering.</p>
+            </div>
+
+            <form class="auth-form">
+                <div class="field-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" placeholder="Enter your username" required>
+                </div>
+
+                <div class="field-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter your password" required>
+                </div>
+
+                <div class="auth-actions">
+                    <button class="auth-btn primary" type="button" onclick="login()">Login to BiteBuddy</button>
+                    <button class="auth-btn secondary" type="button" onclick="window.location.href='signin.html'">Create a New Account</button>
+                </div>
+            </form>
+        </div>
+    </section>
+</main>
+
+<script>
+const starBox = document.getElementById("stars");
+for (let i = 0; i < 80; i++) {
+    const star = document.createElement("span");
+    star.style.left = Math.random() * 100 + "%";
+    star.style.top = Math.random() * 100 + "%";
+    star.style.animationDuration = (Math.random() * 5 + 5) + "s";
+    starBox.appendChild(star);
+}
+</script>
+</body>
+</html>

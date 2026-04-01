@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BiteBuddy Menu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="shortcut icon" href="https://res.cloudinary.com/dn5wb46jl/image/upload/v1774414028/icon_qrqwhg.jpg">
+<link rel="stylesheet" href="theme.css">
+<style>
+.menu-brand {
+    margin: 0;
+    font-family: "Allura", "Cormorant Garamond", cursive;
+    font-size: clamp(4.9rem, 8vw, 7.2rem);
+    text-align: center;
+    color: #7a4d18;
+    text-shadow:
+        0 0 14px rgba(255, 238, 200, 0.92),
+        0 0 26px rgba(215, 159, 59, 0.4);
+    letter-spacing: 0;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateX(-34px);
+    animation: brandWordIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.08s forwards;
+}
+
+.menu-header-icons {
+    opacity: 0;
+    transform: translate(42px, -50%);
+    animation: menuIconsIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.5s forwards;
+}
+
+@keyframes brandWordIn {
+    from {
+        opacity: 0;
+        transform: translateX(-34px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes menuIconsIn {
+    from {
+        opacity: 0;
+        transform: translate(42px, -50%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(0, -50%);
+    }
+}
+
+@media (max-width: 720px) {
+    .menu-topbar {
+        display: grid !important;
+        grid-template-columns: 64px 1fr 64px;
+        align-items: center !important;
+        gap: 10px;
+    }
+
+    .menu-topbar .topbar-title {
+        grid-column: 2;
+        grid-row: 1;
+        margin: 0;
+        width: 100%;
+    }
+
+    .menu-header-icons {
+        grid-column: 1 / 4;
+        grid-row: 1;
+        position: static !important;
+        display: grid;
+        grid-template-columns: 64px 1fr 64px;
+        align-items: center;
+        width: 100%;
+        transform: none !important;
+        animation: none;
+        opacity: 1;
+        margin-top: 0;
+        pointer-events: none;
+    }
+
+    .menu-header-icons .icon-btn {
+        pointer-events: auto;
+    }
+
+    .menu-header-icons .icon-btn:first-child {
+        grid-column: 1;
+    }
+
+    .menu-header-icons .icon-btn:last-child {
+        grid-column: 3;
+    }
+
+    .menu-brand {
+        white-space: normal;
+        line-height: 0.84;
+        font-size: clamp(3.9rem, 12vw, 5.2rem);
+    }
+}
+</style>
+</head>
+<body class="theme-body">
+<main class="app-shell">
+    <header class="topbar menu-topbar" style="position: relative; justify-content: center; align-items: center; margin-bottom: 24px;">
+        <div class="topbar-title" style="margin: 0 auto; text-align: center; align-items: center; justify-items: center; gap: 0;">
+            <h1 class="menu-brand" aria-label="BiteBuddy">Bite<wbr>Buddy</h1>
+        </div>
+
+        <div class="topbar-actions menu-header-icons" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%);">
+            <button class="icon-btn" type="button" onclick="goToCart()" aria-label="Cart" title="Cart" style="min-width: 58px; min-height: 58px; font-size: 1.45rem; padding: 0 18px;">&#128722;</button>
+            <button class="icon-btn" type="button" onclick="goToProfile()" aria-label="Profile" title="Profile" style="min-width: 58px; min-height: 58px; font-size: 1.45rem; padding: 0 18px;">&#128100;</button>
+        </div>
+    </header>
+
+    <form class="search-panel" id="searchForm" style="padding: 14px 18px; border-radius: 30px; margin-bottom: 26px;">
+        <input class="search-field" type="search" id="search" placeholder='Search "vanjaram" or "prawn"' style="font-size: 1.08rem;">
+        <button class="ui-btn primary" type="submit" style="padding: 12px 24px;">Go</button>
+    </form>
+
+    <section class="hero-banner">
+        <div class="hero-copy">
+            <span class="hero-pill">Fresh catch festival</span>
+            <h2 class="hero-title">Coastal cuts, curated for tonight.</h2>
+            <p class="hero-blurb">Browse handpicked fish, prawns, crab, and squid with quick ordering, clearer cards, and a brighter BiteBuddy storefront built to feel premium on both phone and desktop.</p>
+            <div class="inline-actions">
+                <button class="ui-btn primary" type="button" onclick="showCategory('all')">Shop Now</button>
+                <button class="ui-btn ghost" type="button" onclick="goToOrders()">Track Orders</button>
+            </div>
+        </div>
+
+        <div class="hero-aside">
+            <div class="mini-stat">
+                <span class="mini-label">Fastest Slot</span>
+                <span class="mini-value">18 mins</span>
+            </div>
+            <div class="mini-stat">
+                <span class="mini-label">Today's Highlight</span>
+                <span class="mini-value">Vanjaram Cuts</span>
+            </div>
+            <div class="mini-stat">
+                <span class="mini-label">Available Now</span>
+                <span class="mini-value" id="catalogCount">24 items</span>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-header">
+        <div>
+            <h2 class="section-title">Browse by Category</h2>
+            <p class="section-copy">Tap a category to switch the menu instantly without leaving the page.</p>
+        </div>
+    </div>
+
+    <section class="category-grid">
+        <button class="category-card active" type="button" data-category="all">
+            <img src="https://res.cloudinary.com/dn5wb46jl/image/upload/v1774504147/fish_cat_fyqmtb.png" alt="Fish">
+            <div class="category-body">
+                <h3 class="category-title">All Fish</h3>
+                <p class="category-copy">Everything fresh across fish, prawns, crab, and squid.</p>
+            </div>
+        </button>
+        <button class="category-card" type="button" data-category="prawns">
+            <img src="https://res.cloudinary.com/dn5wb46jl/image/upload/v1774502174/prawn_cat_mcloky.png" alt="Prawns">
+            <div class="category-body">
+                <h3 class="category-title">Prawns</h3>
+                <p class="category-copy">Juicy prawns for fry, curry, and biryani nights.</p>
+            </div>
+        </button>
+        <button class="category-card" type="button" data-category="crab">
+            <img src="https://res.cloudinary.com/dn5wb46jl/image/upload/v1774500321/crab_cat_ictixn.jpg" alt="Crab">
+            <div class="category-body">
+                <h3 class="category-title">Crab</h3>
+                <p class="category-copy">Bold shellfish picks with deep coastal flavor.</p>
+            </div>
+        </button>
+        <button class="category-card" type="button" data-category="squid">
+            <img src="https://res.cloudinary.com/dn5wb46jl/image/upload/v1774499990/squid_cat_iyl1kw.jpg" alt="Squid">
+            <div class="category-body">
+                <h3 class="category-title">Squid</h3>
+                <p class="category-copy">Tender squid cuts for grills, roasts, and fries.</p>
+            </div>
+        </button>
+    </section>
+
+    <div class="section-header" id="recommendedSection">
+        <div>
+            <h2 class="section-title" id="menuSectionTitle">Recommended for You</h2>
+            <p class="section-copy" id="menuSectionCopy">A clean menu grid with richer product detail and faster actions.</p>
+        </div>
+    </div>
+
+    <section class="product-grid" id="menu"></section>
+</main>
+
+<nav class="bottom-nav">
+    <button class="nav-link" data-page="menu.html" type="button" onclick="goToMenu()">Menu</button>
+    <button class="nav-link" data-page="orders.html" type="button" onclick="goToOrders()">Orders</button>
+    <button class="nav-link" data-page="cart.html" type="button" onclick="goToCart()">Cart</button>
+    <button class="nav-link" data-page="profile.html" type="button" onclick="goToProfile()">Profile</button>
+</nav>
+
+<script src="app.js"></script>
+<script src="catalog.js"></script>
+<script>
+const username = requireUsername();
+const menu = document.getElementById("menu");
+const categoryCards = Array.from(document.querySelectorAll(".category-card"));
+document.getElementById("catalogCount").innerText = `${BITE_CATALOG.length} items`;
+
+function createMenuCard(item, index) {
+    const price = getCatalogPrice(index);
+    const rating = getCatalogRating(index);
+    const eta = getCatalogEta(index);
+    const offer = getCatalogOffer(price);
+
+    const card = document.createElement("article");
+    card.className = "product-card";
+    card.innerHTML = `
+        <img class="product-media" src="${item.image}" alt="${item.name}">
+        <div class="product-body">
+            <div class="product-topline">
+                <div>
+                    <h3 class="product-name">${item.name}</h3>
+                    <p class="meta-copy">${item.note}</p>
+                </div>
+                <div class="product-price">Rs.${price}/kg</div>
+            </div>
+            <div class="meta-row">
+                <span class="meta-badge">${rating} rating</span>
+                <span class="meta-badge">${eta}</span>
+                <span class="meta-badge">${offer}</span>
+            </div>
+            <div class="inline-actions">
+                <button class="ui-btn primary" type="button" onclick="addToCart('${item.name}', ${price}, '${item.category}', '${item.image}')">Order Now</button>
+                <button class="ui-btn ghost" type="button" onclick="openSearchFor('${item.name}')">View Similar</button>
+            </div>
+        </div>
+    `;
+    return card;
+}
+
+function loadMenu(category) {
+    const selectedCategory = category || "all";
+    const items = selectedCategory === "all"
+        ? BITE_CATALOG
+        : BITE_CATALOG.filter((item) => item.category === selectedCategory);
+
+    menu.innerHTML = "";
+    items.forEach((item) => {
+        const index = BITE_CATALOG.findIndex((catalogItem) => catalogItem.name === item.name);
+        menu.appendChild(createMenuCard(item, index));
+    });
+
+    document.getElementById("menuSectionTitle").innerText = selectedCategory === "all" ? "Recommended for You" : `${selectedCategory.charAt(0).toUpperCase()}${selectedCategory.slice(1)} Picks`;
+    document.getElementById("menuSectionCopy").innerText = selectedCategory === "all"
+        ? "Everything on BiteBuddy, from daily fish cuts to prawns, crab, and squid."
+        : getCategoryCopy(selectedCategory);
+}
+
+async function addToCart(name, price, category, imageUrl) {
+    try {
+        await fetchJson(`${API_BASE_URL}/cart`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                username: username,
+                name: name,
+                price: price,
+                category: category,
+                imageUrl: imageUrl
+            })
+        });
+
+        navigateTo("cart.html");
+    } catch (error) {
+        alert(error.message || "Unable to add item to cart");
+    }
+}
+
+function showCategory(category) {
+    categoryCards.forEach((card) => {
+        card.classList.toggle("active", card.dataset.category === category);
+    });
+
+    loadMenu(category);
+    document.getElementById("recommendedSection").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function openSearchFor(query) {
+    window.location.href = appendUsername(`search.html?q=${encodeURIComponent(query)}`);
+}
+
+function goToSearchPage(event) {
+    if (event) {
+        event.preventDefault();
+    }
+
+    const query = document.getElementById("search").value.trim();
+    if (!query) {
+        return;
+    }
+
+    window.location.href = appendUsername(`search.html?q=${encodeURIComponent(query)}`);
+}
+
+function goToCart() {
+    navigateTo("cart.html");
+}
+
+function goToMenu() {
+    navigateTo("menu.html");
+}
+
+function goToOrders() {
+    navigateTo("orders.html");
+}
+
+function goToProfile() {
+    navigateTo("profile.html");
+}
+
+function highlightCurrentNav() {
+    const current = window.location.pathname.split("/").pop() || "menu.html";
+    document.querySelectorAll(".bottom-nav .nav-link").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.page === current);
+    });
+}
+
+categoryCards.forEach((card) => {
+    card.addEventListener("click", () => showCategory(card.dataset.category));
+});
+
+document.getElementById("searchForm").addEventListener("submit", goToSearchPage);
+
+loadMenu("all");
+highlightCurrentNav();
+</script>
+</body>
+</html>

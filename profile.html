@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BiteBuddy Profile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="shortcut icon" href="https://res.cloudinary.com/dn5wb46jl/image/upload/v1774414028/icon_qrqwhg.jpg">
+<link rel="stylesheet" href="theme.css">
+<style>
+.profile-panel {
+    animation: profilePanelIn 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.profile-hero,
+.profile-field,
+.profile-actions {
+    opacity: 0;
+    transform: translateX(44px);
+    animation: profileSlideIn 0.72s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.profile-hero { animation-delay: 0.14s; }
+.profile-field:nth-child(1) { animation-delay: 0.22s; }
+.profile-field:nth-child(2) { animation-delay: 0.30s; }
+.profile-field:nth-child(3) { animation-delay: 0.38s; }
+.profile-field:nth-child(4) { animation-delay: 0.46s; }
+.profile-field:nth-child(5) { animation-delay: 0.54s; }
+.profile-actions { animation-delay: 0.64s; }
+
+@keyframes profilePanelIn {
+    from {
+        opacity: 0;
+        transform: translateX(36px) scale(0.985);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+@keyframes profileSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(44px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+</style>
+</head>
+<body class="theme-body">
+<main class="simple-shell">
+    <header class="topbar">
+        <div class="topbar-title">
+            <span class="eyebrow">Account center</span>
+            <h1 class="page-heading">Profile</h1>
+            <p class="topbar-copy">Keep your delivery identity current so every BiteBuddy order arrives at the right place.</p>
+        </div>
+
+        <div class="topbar-actions">
+            <button class="icon-btn" type="button" onclick="goBack()">Back</button>
+            <button class="icon-btn" type="button" onclick="logout()">Logout</button>
+        </div>
+    </header>
+
+    <section class="detail-card stack profile-panel">
+        <div class="profile-hero">
+            <div class="avatar" aria-label="Profile initials" id="avatarInitials">BB</div>
+            <div>
+                <span class="eyebrow">Your BiteBuddy details</span>
+                <h2 class="section-title" style="font-size: 2.6rem;">Saved account information</h2>
+                <p class="topbar-copy">Update your personal and delivery details below.</p>
+            </div>
+        </div>
+
+        <div class="form-grid">
+            <div class="field profile-field">
+                <label for="name">Name</label>
+                <input type="text" id="name" placeholder="Enter name">
+            </div>
+
+            <div class="field profile-field">
+                <label for="phone">Phone Number</label>
+                <input type="text" id="phone" placeholder="Enter mobile number">
+            </div>
+
+            <div class="field profile-field">
+                <label for="username">Username</label>
+                <input type="text" id="username" placeholder="Username" readonly>
+            </div>
+
+            <div class="field profile-field">
+                <label for="email">Email</label>
+                <input type="email" id="email" placeholder="Enter email">
+            </div>
+
+            <div class="field full profile-field">
+                <label for="address">Address</label>
+                <textarea id="address" placeholder="Enter address"></textarea>
+            </div>
+        </div>
+
+        <div class="inline-actions profile-actions">
+            <button class="ui-btn primary" type="button" onclick="saveProfile()">Save Details</button>
+            <button class="ui-btn ghost" type="button" onclick="goBack()">Back</button>
+        </div>
+    </section>
+</main>
+
+<script src="app.js"></script>
+<script>
+const username = requireUsername();
+
+function setAvatar(name, fallbackUsername) {
+    const seed = (name || fallbackUsername || "BB").trim();
+    const parts = seed.split(/\s+/).filter(Boolean);
+    const initials = parts.length > 1
+        ? (parts[0][0] + parts[1][0]).toUpperCase()
+        : seed.slice(0, 2).toUpperCase();
+    document.getElementById("avatarInitials").innerText = initials || "BB";
+}
+
+async function loadProfile() {
+    try {
+        const user = await fetchJson(`${API_BASE_URL}/customer/${encodeURIComponent(username)}`);
+        document.getElementById("name").value = user.name || "";
+        document.getElementById("phone").value = user.phone || "";
+        document.getElementById("username").value = user.username || "";
+        document.getElementById("email").value = user.email || "";
+        document.getElementById("address").value = user.address || "";
+        setAvatar(user.name, user.username);
+    } catch (error) {
+        alert(error.message || "Unable to load profile");
+        window.location.href = "index.html";
+    }
+}
+
+async function saveProfile() {
+    try {
+        await fetchJson(`${API_BASE_URL}/customer/${encodeURIComponent(username)}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                name: document.getElementById("name").value,
+                phone: document.getElementById("phone").value,
+                email: document.getElementById("email").value,
+                address: document.getElementById("address").value
+            })
+        });
+
+        setAvatar(document.getElementById("name").value, username);
+        alert("Profile updated");
+    } catch (error) {
+        alert(error.message || "Unable to update profile");
+    }
+}
+
+function logout() {
+    window.location.href = "index.html";
+}
+
+function goBack() {
+    navigateTo("menu.html");
+}
+
+loadProfile();
+</script>
+</body>
+</html>

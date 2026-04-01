@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BiteBuddy Sign Up</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="shortcut icon" href="https://res.cloudinary.com/dn5wb46jl/image/upload/v1774414028/icon_qrqwhg.jpg">
+    <link rel="stylesheet" href="signup.css">
+</head>
+<body class="auth-body">
+<div class="auth-backdrop"></div>
+<div class="stars" id="stars"></div>
+
+<main class="auth-frame">
+    <button class="page-back-btn" type="button" onclick="goBackToLogin()">Back</button>
+
+    <section class="auth-grid">
+        <div class="auth-copy">
+            <div class="auth-kicker">New member onboarding</div>
+            <p class="brand">BiteBuddy</p>
+            <h1>Start ordering from a calmer, brighter seafood storefront.</h1>
+            <p>Create your account once and use it across menu, cart, orders, and profile with the refreshed BiteBuddy experience.</p>
+            <div class="auth-points">
+                <div class="auth-point">Personalized delivery details and saved address</div>
+                <div class="auth-point">Instant access to fresh seafood categories</div>
+                <div class="auth-point">Consistent interface across every screen</div>
+            </div>
+        </div>
+
+        <div class="auth-panel">
+            <div>
+                <h2>Create your account</h2>
+                <p class="auth-subtitle">Fill in your details and jump straight into the menu.</p>
+            </div>
+
+            <form id="signupForm" class="auth-form" action="http://localhost:8080/api/customer" method="post">
+                <div class="form-grid">
+                    <div class="field-group">
+                        <label for="name">Name</label>
+                        <input id="name" type="text" name="name" placeholder="Your full name" required>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="phone">Phone</label>
+                        <input id="phone" type="tel" name="phone" placeholder="Mobile number" required>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="user">Username</label>
+                        <input id="user" type="text" name="user" placeholder="Choose a username" required>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="pass">Password</label>
+                        <input id="pass" type="password" name="pass" placeholder="Create a password" required>
+                    </div>
+
+                    <div class="field-group full">
+                        <label for="email">Email</label>
+                        <input id="email" type="email" name="email" placeholder="name@example.com" required>
+                    </div>
+
+                    <div class="field-group full">
+                        <label for="address">Address</label>
+                        <textarea id="address" name="address" placeholder="Delivery address" required></textarea>
+                    </div>
+                </div>
+
+                <p id="signupError" style="display:none;">Username already exists</p>
+
+                <div class="auth-actions">
+                    <button class="auth-btn primary" type="submit">Create Account</button>
+                </div>
+            </form>
+
+            <p class="auth-switch">Already have an account? <a href="index.html">Log in</a></p>
+        </div>
+    </section>
+</main>
+
+<script>
+const starBox = document.getElementById("stars");
+for (let i = 0; i < 80; i++) {
+    const star = document.createElement("span");
+    star.style.left = Math.random() * 100 + "%";
+    star.style.top = Math.random() * 100 + "%";
+    star.style.animationDuration = (Math.random() * 5 + 5) + "s";
+    starBox.appendChild(star);
+}
+
+async function getExistingUsers(signupUrl) {
+    try {
+        const response = await fetch(signupUrl, { method: "GET" });
+        if (!response.ok) {
+            throw new Error("Unable to fetch existing users");
+        }
+
+        const remoteUsers = await response.json();
+        if (Array.isArray(remoteUsers)) {
+            return remoteUsers;
+        }
+    } catch (error) {
+        console.log("Existing user check fallback:", error);
+    }
+
+    return [];
+}
+
+document.getElementById("signupForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    const formData = new FormData(this);
+    const payload = new URLSearchParams(formData);
+    const signupError = document.getElementById("signupError");
+    const username = (formData.get("user") || "").trim().toLowerCase();
+    const allKnownUsers = await getExistingUsers(this.action);
+
+    signupError.style.display = "none";
+
+    if (allKnownUsers.some((user) => ((user.username || user.user || "").trim().toLowerCase() === username))) {
+        signupError.style.display = "block";
+        return;
+    }
+
+    try {
+        const response = await fetch(this.action, {
+            method: this.method,
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: payload.toString()
+        });
+
+        if (!response.ok) {
+            throw new Error("Signup failed");
+        }
+
+        window.location.href = "index.html";
+    } catch (error) {
+        console.log("Error:", error);
+        alert("Signup failed. Please try again.");
+    }
+});
+
+function goBackToLogin() {
+    window.location.href = "index.html";
+}
+</script>
+</body>
+</html>

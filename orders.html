@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BiteBuddy Orders</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="shortcut icon" href="https://res.cloudinary.com/dn5wb46jl/image/upload/v1774414028/icon_qrqwhg.jpg">
+<link rel="stylesheet" href="theme.css">
+</head>
+<body class="theme-body">
+<main class="simple-shell">
+    <header class="topbar">
+        <div class="topbar-title">
+            <span class="eyebrow">Live order board</span>
+            <h1 class="page-heading">My Orders</h1>
+            <p class="topbar-copy">Track the seafood you have already placed, including estimated delivery and order state.</p>
+        </div>
+
+        <div class="topbar-actions">
+            <button class="icon-btn" type="button" onclick="goToMenu()">Back</button>
+            <button class="icon-btn" type="button" onclick="goToCart()">Cart</button>
+        </div>
+    </header>
+
+    <section class="glass-card simple-hero stack">
+        <div class="line-between">
+            <div>
+                <span class="eyebrow">Today's pulse</span>
+                <h2 class="section-title" style="font-size: 2.4rem;">Orders synced to your account</h2>
+            </div>
+            <div class="meta-row">
+                <span class="meta-badge" id="orderCountBadge">Loading</span>
+                <span class="meta-badge" id="usernameBadge">Signed in</span>
+            </div>
+        </div>
+        <p class="topbar-copy">Pending, delivered, and cancelled orders all appear below with clearer status markers.</p>
+    </section>
+
+    <section class="orders-grid" id="ordersList"></section>
+</main>
+
+<script src="app.js"></script>
+<script src="catalog.js"></script>
+<script>
+const username = requireUsername();
+document.getElementById("usernameBadge").innerText = username;
+
+function getOrderImage(itemName) {
+    const exactMatch = findCatalogItemByName(itemName);
+    if (exactMatch) {
+        return exactMatch.image;
+    }
+
+    const looseMatch = BITE_CATALOG.find((item) => itemName && (item.name.includes(itemName) || itemName.includes(item.name)));
+    return looseMatch ? looseMatch.image : "https://res.cloudinary.com/dn5wb46jl/image/upload/v1774504147/fish_cat_fyqmtb.png";
+}
+
+function goToMenu() {
+    navigateTo("menu.html");
+}
+
+function goToCart() {
+    navigateTo("cart.html");
+}
+
+function formatDate(dateString) {
+    const parsedDate = parseOrderDate(dateString);
+    if (!parsedDate) {
+        return "Time not available";
+    }
+
+    return parsedDate.toLocaleString("en-IN", {
+        weekday: "short",
+        day: "2-digit",
+        month: "short",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true
+    });
+}
+
+function parseOrderDate(value) {
+    if (!value) {
+        return null;
+    }
+
+    if (value instanceof Date) {
+        return Number.isNaN(value.getTime()) ? null : value;
+    }
+
+    if (typeof value === "string" || typeof value === "number") {
+        const directDate = new Date(value);
+        return Number.isNaN(directDate.getTime()) ? null : directDate;
+    }
+
+    if (Array.isArray(value) && value.length >= 3) {
+        const [year, month, day, hour = 0, minute = 0, second = 0, nano = 0] = value;
+        const arrayDate = new Date(year, month - 1, day, hour, minute, second, Math.floor(nano / 1000000));
+        return Number.isNaN(arrayDate.getTime()) ? null : arrayDate;
+    }
+
+    const seconds = value.seconds ?? value._seconds;
+    if (typeof seconds === "number") {
+        const millisFromSeconds = seconds * 1000 + Math.floor((value.nanoseconds ?? value._nanoseconds ?? 0) / 1000000);
+        const timestampDate = new Date(millisFromSeconds);
+        return Number.isNaN(timestampDate.getTime()) ? null : timestampDate;
+    }
+
+    const millis = value.epochMilli ?? value.epochMillis ?? value.timestamp ?? value.time;
+    if (typeof millis === "number") {
+        const millisDate = new Date(millis);
+        return Number.isNaN(millisDate.getTime()) ? null : millisDate;
+    }
+
+    if (typeof value === "object") {
+        if (typeof value.toDate === "function") {
+            const converted = value.toDate();
+            return converted instanceof Date && !Number.isNaN(converted.getTime()) ? converted : null;
+        }
+
+        if (value.date) {
+            return parseOrderDate(value.date);
+        }
+    }
+
+    return null;
+}
+
+function formatQuantity(quantity) {
+    let numericQuantity = Number(quantity);
+    if (!Number.isFinite(numericQuantity) || numericQuantity < 1) {
+        numericQuantity = 1;
+    }
+
+    return `${Math.round(numericQuantity)} kg`;
+}
+
+function renderOrders(orders) {
+    const list = document.getElementById("ordersList");
+    list.innerHTML = "";
+    document.getElementById("orderCountBadge").innerText = `${orders.length} order${orders.length === 1 ? "" : "s"}`;
+
+    if (!orders.length) {
+        list.innerHTML = `
+            <div class="empty-card">
+                <h3 class="product-name">No orders yet</h3>
+                <p class="topbar-copy">Only orders placed by the signed-in user will appear here.</p>
+                <button class="ui-btn primary" type="button" onclick="goToMenu()">Start Ordering</button>
+            </div>
+        `;
+        return;
+    }
+
+    orders.forEach((order) => {
+        const isCancelled = (order.status || "").toLowerCase() === "cancelled";
+        const orderedAt = parseOrderDate(order.orderedAt) || new Date();
+        const etaDate = new Date(orderedAt.getTime() + (30 * 60 * 1000));
+        const isDelivered = !isCancelled && Date.now() >= etaDate.getTime();
+        const status = isCancelled ? "Cancelled" : (isDelivered ? "Delivered" : (order.status || "Preparing"));
+        const etaText = isCancelled
+            ? "Order cancelled"
+            : (isDelivered ? "Delivered at " + formatDate(etaDate) : "Expected delivery by " + formatDate(etaDate));
+        const canCancel = !isDelivered && !isCancelled;
+
+        const card = document.createElement("article");
+        card.className = "order-card";
+        card.innerHTML = `
+            <div class="order-card-layout">
+                <img class="order-visual" src="${getOrderImage(order.itemName)}" alt="${order.itemName}">
+                <div class="order-body stack">
+                    <div class="line-between">
+                        <div>
+                            <span class="eyebrow">Order #${order.id}</span>
+                            <h3 class="product-name">${order.itemName}</h3>
+                        </div>
+                        <span class="status-pill ${isDelivered ? "delivered" : ""} ${isCancelled ? "cancelled" : ""}">${status}</span>
+                    </div>
+                    <p class="topbar-copy">${etaText}</p>
+                    <div class="meta-row">
+                        <span class="meta-badge">Placed on ${formatDate(order.orderedAt)}</span>
+                        <span class="meta-badge">Quantity: ${formatQuantity(order.quantity)}</span>
+                        <span class="meta-badge">Total: Rs.${order.price}</span>
+                    </div>
+                    ${canCancel ? `<div class="inline-actions"><button class="ui-btn ghost" type="button" onclick="cancelOrder(${order.id})">Cancel Order</button></div>` : ""}
+                </div>
+            </div>
+        `;
+        list.appendChild(card);
+    });
+}
+
+async function loadOrders() {
+    try {
+        const orders = await fetchJson(`${API_BASE_URL}/orders?username=${encodeURIComponent(username)}`);
+        renderOrders(orders);
+    } catch (error) {
+        alert(error.message || "Unable to load orders");
+    }
+}
+
+async function cancelOrder(orderId) {
+    try {
+        await fetchJson(`${API_BASE_URL}/orders/${orderId}/cancel?username=${encodeURIComponent(username)}`, {
+            method: "PUT"
+        });
+        await loadOrders();
+    } catch (error) {
+        alert(error.message || "Unable to cancel order");
+    }
+}
+
+loadOrders();
+</script>
+</body>
+</html>

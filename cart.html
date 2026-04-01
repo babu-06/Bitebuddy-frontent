@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BiteBuddy Cart</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="shortcut icon" href="https://res.cloudinary.com/dn5wb46jl/image/upload/v1774414028/icon_qrqwhg.jpg">
+<link rel="stylesheet" href="theme.css">
+</head>
+<body class="theme-body">
+<main class="app-shell">
+    <header class="topbar">
+        <div class="topbar-title">
+            <span class="eyebrow">Checkout studio</span>
+            <h1 class="page-heading">My Cart</h1>
+            <p class="topbar-copy">Review your catch, confirm delivery details, and place the order with one clean flow.</p>
+        </div>
+
+        <div class="topbar-actions">
+            <button class="icon-btn" type="button" onclick="goBack()">Back</button>
+            <button class="icon-btn" type="button" onclick="goToProfile()">Profile</button>
+        </div>
+    </header>
+
+    <div class="split-layout">
+        <div class="stack">
+            <section class="detail-card">
+                <div class="line-between">
+                    <div>
+                        <span class="eyebrow">Delivery details</span>
+                        <h2 class="section-title" style="font-size: 2.2rem;">Drop point</h2>
+                    </div>
+                    <button class="ui-btn ghost" type="button" onclick="goToProfile()">Edit profile</button>
+                </div>
+
+                <div class="cards-grid" style="grid-template-columns: 1fr;">
+                    <div class="detail-row">
+                        <strong>Name</strong>
+                        <span id="deliverName">Customer</span>
+                    </div>
+                    <div class="detail-row">
+                        <strong>Phone</strong>
+                        <span id="deliverPhone">Not added</span>
+                    </div>
+                    <div class="detail-row">
+                        <strong>Address</strong>
+                        <span id="deliverAddress">Add your delivery address in profile</span>
+                    </div>
+                </div>
+            </section>
+
+            <div class="callout" id="rewardMessage">Add 2 more items to unlock extra savings on this order.</div>
+
+            <section class="cart-list" id="cart"></section>
+        </div>
+
+        <aside class="summary-card">
+            <div>
+                <span class="eyebrow">Bill preview</span>
+                <h2 class="section-title" style="font-size: 2.4rem;">Order Summary</h2>
+            </div>
+            <div class="summary-row">
+                <span>MRP</span>
+                <strong id="mrp">Rs.0</strong>
+            </div>
+            <div class="summary-row">
+                <span>Delivery fee</span>
+                <strong id="fee">Rs.0</strong>
+            </div>
+            <div class="summary-row">
+                <span class="summary-emphasis">Total payable</span>
+                <strong class="summary-emphasis" id="summaryTotal">Rs.0</strong>
+            </div>
+            <div class="callout" id="savings">You'll save Rs.0 on this order.</div>
+            <div class="stack">
+                <p class="meta-copy">List price <span id="oldTotal">Rs.0</span></p>
+                <h3 class="page-heading" style="font-size: 2.6rem;" id="total">Rs.0</h3>
+                <button class="ui-btn primary" type="button" onclick="placeOrder()">Place Order</button>
+            </div>
+        </aside>
+    </div>
+</main>
+
+<div class="modal" id="paymentModal">
+    <div class="modal-card">
+        <div class="stack">
+            <span class="eyebrow">Payment method</span>
+            <h2 class="section-title" style="font-size: 2.4rem;">How would you like to pay?</h2>
+            <p class="topbar-copy">Choose your payment option before confirming the order.</p>
+        </div>
+        <div class="choice-list">
+            <button class="choice-btn active" type="button" id="upiOption" onclick="selectPaymentMethod('UPI')">
+                <strong>UPI</strong><br>
+                <span class="meta-copy">Pay instantly with your preferred UPI app.</span>
+            </button>
+            <button class="choice-btn" type="button" id="codOption" onclick="selectPaymentMethod('Cash on Delivery')">
+                <strong>Cash on Delivery</strong><br>
+                <span class="meta-copy">Pay when the order arrives at your doorstep.</span>
+            </button>
+        </div>
+        <div class="modal-actions">
+            <button class="ui-btn primary" type="button" onclick="confirmPlaceOrder()">Continue</button>
+            <button class="ui-btn ghost" type="button" onclick="closePaymentModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="orderModal">
+    <div class="modal-card">
+        <div class="stack">
+            <span class="eyebrow">Order placed</span>
+            <h2 class="section-title" style="font-size: 2.4rem;">Your seafood is on the way.</h2>
+            <p class="topbar-copy" id="orderMessage">Your order is confirmed.</p>
+        </div>
+        <div class="modal-actions">
+            <button class="ui-btn primary" type="button" onclick="goToOrders()">View Order</button>
+            <button class="ui-btn ghost" type="button" onclick="closeOrderModal()">Continue Shopping</button>
+        </div>
+    </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+let cartItems = [];
+const username = requireUsername();
+const cartDiv = document.getElementById("cart");
+const paymentModal = document.getElementById("paymentModal");
+const orderModal = document.getElementById("orderModal");
+const orderMessage = document.getElementById("orderMessage");
+let selectedPaymentMethod = "UPI";
+
+function normalizeQuantity(quantity) {
+    const numericQuantity = Number(quantity);
+    if (!Number.isFinite(numericQuantity) || numericQuantity < 1) {
+        return 1;
+    }
+
+    return Math.round(numericQuantity);
+}
+
+function formatQuantity(quantity) {
+    return `${normalizeQuantity(quantity)} kg`;
+}
+
+function formatEta(date) {
+    return date.toLocaleString("en-IN", {
+        weekday: "short",
+        day: "2-digit",
+        month: "short",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true
+    });
+}
+
+async function loadDeliveryDetails() {
+    try {
+        const user = await fetchJson(`${API_BASE_URL}/customer/${encodeURIComponent(username)}`);
+        document.getElementById("deliverName").innerText = (user.name || user.username || "Customer").trim();
+        document.getElementById("deliverPhone").innerText = (String(user.phone || "")).trim() || "Not added";
+        document.getElementById("deliverAddress").innerText = (user.address || "").trim() || "Add your delivery address in profile";
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+function updateTotals(total) {
+    const fee = total > 0 ? 10 : 0;
+    const oldTotal = total > 0 ? total + 173 : 0;
+    const finalTotal = total + fee;
+    const savings = oldTotal - finalTotal;
+
+    document.getElementById("mrp").innerText = "Rs." + oldTotal;
+    document.getElementById("fee").innerText = "Rs." + fee;
+    document.getElementById("summaryTotal").innerText = "Rs." + finalTotal;
+    document.getElementById("oldTotal").innerText = "Rs." + oldTotal;
+    document.getElementById("total").innerText = "Rs." + finalTotal;
+    document.getElementById("savings").innerText = total > 0
+        ? "You will save Rs." + savings + " on this order."
+        : "Add items to unlock savings on this order.";
+}
+
+function updateRewardMessage() {
+    const missingItems = Math.max(0, 2 - cartItems.length);
+    document.getElementById("rewardMessage").innerText = missingItems > 0
+        ? `Add ${missingItems} more item${missingItems === 1 ? "" : "s"} to unlock extra savings.`
+        : "Bonus unlocked. Your cart qualifies for extra BiteBuddy savings.";
+}
+
+function renderCart() {
+    cartDiv.innerHTML = "";
+    updateRewardMessage();
+
+    if (cartItems.length === 0) {
+        cartDiv.innerHTML = `
+            <div class="empty-card">
+                <h3 class="product-name">Your cart is empty</h3>
+                <p class="topbar-copy">Add some fresh seafood from the menu and come back here.</p>
+                <button class="ui-btn primary" type="button" onclick="goBack()">Explore Menu</button>
+            </div>
+        `;
+        updateTotals(0);
+        return;
+    }
+
+    let total = 0;
+
+    cartItems.forEach((item, index) => {
+        const quantity = normalizeQuantity(item.quantity);
+        total += item.price * quantity;
+
+        const oldPrice = item.price + 80;
+        const imageClass = item.itemName === "Nethili Meen" ? "cart-thumb zoom-cover-media" : "cart-thumb";
+        const card = document.createElement("article");
+        card.className = "cart-item";
+        card.innerHTML = `
+            <div class="cart-item-grid">
+                <img class="${imageClass}" src="${item.imageUrl}" alt="${item.itemName}">
+                <div class="stack">
+                    <div class="line-between">
+                        <div>
+                            <h3 class="product-name">${item.itemName}</h3>
+                            <p class="topbar-copy">${formatQuantity(quantity)} selected</p>
+                        </div>
+                        <div class="product-price">Rs.${item.price}</div>
+                    </div>
+                    <div class="meta-row">
+                        <span class="meta-badge">Fresh catch</span>
+                        <span class="meta-badge">4.${(index % 5) + 1} rating</span>
+                        <span class="meta-badge">30 mins delivery</span>
+                    </div>
+                    <div class="line-between">
+                        <div class="stack" style="gap: 6px;">
+                            <span class="accent-text">25% off</span>
+                            <span class="meta-copy">List price Rs.${oldPrice}</span>
+                        </div>
+                        <div class="qty-box">
+                            <button class="qty-btn" type="button" onclick="changeQty(${item.id}, ${quantity - 1})">-</button>
+                            <strong>Qty: ${formatQuantity(quantity)}</strong>
+                            <button class="qty-btn" type="button" onclick="changeQty(${item.id}, ${quantity + 1})">+</button>
+                        </div>
+                    </div>
+                    <div class="cart-actions">
+                        <button class="ui-btn ghost" type="button" onclick="removeItem(${item.id})">Remove</button>
+                        <button class="ui-btn ghost" type="button" onclick="goBack()">Add More</button>
+                        <button class="ui-btn secondary" type="button" onclick="placeOrder()">Buy This Now</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        cartDiv.appendChild(card);
+    });
+
+    updateTotals(total);
+}
+
+async function loadCart() {
+    try {
+        cartItems = await fetchJson(`${API_BASE_URL}/cart?username=${encodeURIComponent(username)}`);
+        renderCart();
+    } catch (error) {
+        alert(error.message || "Unable to load cart");
+    }
+}
+
+async function changeQty(id, quantity) {
+    try {
+        const safeQuantity = normalizeQuantity(quantity);
+        await fetchJson(`${API_BASE_URL}/cart/${id}?username=${encodeURIComponent(username)}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ quantity: safeQuantity })
+        });
+        await loadCart();
+    } catch (error) {
+        alert(error.message || "Unable to update quantity");
+    }
+}
+
+async function removeItem(id) {
+    try {
+        await fetchJson(`${API_BASE_URL}/cart/${id}?username=${encodeURIComponent(username)}`, {
+            method: "DELETE"
+        });
+        await loadCart();
+    } catch (error) {
+        alert(error.message || "Unable to remove item");
+    }
+}
+
+function isSuccessfulOrderResponse(responseText) {
+    if (typeof responseText !== "string") {
+        return true;
+    }
+
+    const normalized = responseText.trim().toLowerCase();
+    if (!normalized) {
+        return true;
+    }
+
+    return !(
+        normalized.includes("unable") ||
+        normalized.includes("not found") ||
+        normalized.includes("failed") ||
+        normalized.includes("error")
+    );
+}
+
+async function createOrdersDirectlyFromCart() {
+    for (const item of cartItems) {
+        const quantity = normalizeQuantity(item.quantity);
+        const params = new URLSearchParams({
+            username: username,
+            itemName: item.itemName,
+            quantity: String(quantity),
+            price: String(item.price)
+        });
+
+        const response = await fetchJson(`${API_BASE_URL}/orders?${params.toString()}`, {
+            method: "POST"
+        });
+
+        if (!isSuccessfulOrderResponse(response)) {
+            throw new Error(typeof response === "string" ? response : "Unable to place order");
+        }
+    }
+
+    for (const item of cartItems) {
+        await fetchJson(`${API_BASE_URL}/cart/${item.id}?username=${encodeURIComponent(username)}`, {
+            method: "DELETE"
+        });
+    }
+}
+
+function selectPaymentMethod(method) {
+    selectedPaymentMethod = method;
+    document.getElementById("upiOption").classList.toggle("active", method === "UPI");
+    document.getElementById("codOption").classList.toggle("active", method === "Cash on Delivery");
+}
+
+function placeOrder() {
+    if (cartItems.length === 0) {
+        alert("Your cart is empty");
+        return;
+    }
+
+    paymentModal.classList.add("show");
+}
+
+function closePaymentModal() {
+    paymentModal.classList.remove("show");
+}
+
+async function confirmPlaceOrder() {
+    try {
+        closePaymentModal();
+        await createOrdersDirectlyFromCart();
+        await loadCart();
+
+        const etaDate = new Date(Date.now() + (30 * 60 * 1000));
+        orderMessage.innerText = `${selectedPaymentMethod} selected. Expected delivery by ${formatEta(etaDate)}.`;
+        orderModal.classList.add("show");
+    } catch (error) {
+        alert(error.message || "Unable to place order");
+    }
+}
+
+function closeOrderModal() {
+    orderModal.classList.remove("show");
+    navigateTo("menu.html");
+}
+
+function goToOrders() {
+    navigateTo("orders.html");
+}
+
+function goBack() {
+    navigateTo("menu.html");
+}
+
+function goToProfile() {
+    navigateTo("profile.html");
+}
+
+loadCart();
+loadDeliveryDetails();
+</script>
+</body>
+</html>

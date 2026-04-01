@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BiteBuddy My Orders</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="shortcut icon" href="https://res.cloudinary.com/dn5wb46jl/image/upload/v1774414028/icon_qrqwhg.jpg">
+    <link rel="stylesheet" href="theme.css">
+</head>
+<body class="theme-body">
+    <main class="simple-shell">
+        <section class="glass-card simple-hero stack">
+            <div class="line-between">
+                <div>
+                    <span class="eyebrow">Legacy order view</span>
+                    <h1 class="page-heading">My Orders</h1>
+                    <p class="topbar-copy">Only the orders placed by the signed-in user are shown here.</p>
+                </div>
+                <div class="inline-actions">
+                    <button class="ui-btn ghost" id="refreshBtn" type="button">Refresh Orders</button>
+                </div>
+            </div>
+            <div class="meta-row">
+                <span class="meta-badge" id="loggedInUser">Checking login...</span>
+            </div>
+        </section>
+
+        <p class="status-text" id="statusMessage">Loading your orders...</p>
+        <section class="orders-grid" id="ordersContainer"></section>
+    </main>
+
+    <script src="catalog.js"></script>
+    <script src="myorders.js"></script>
+</body>
+</html>

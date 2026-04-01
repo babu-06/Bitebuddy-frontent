@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BiteBuddy Search</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="shortcut icon" href="https://res.cloudinary.com/dn5wb46jl/image/upload/v1774414028/icon_qrqwhg.jpg">
+<link rel="stylesheet" href="theme.css">
+</head>
+<body class="theme-body">
+<main class="simple-shell">
+    <header class="topbar">
+        <div class="topbar-title">
+            <span class="eyebrow">Smart search</span>
+            <h1 class="page-heading">Search Results</h1>
+            <p class="topbar-copy" id="queryLine">Loading matching seafood picks.</p>
+        </div>
+
+        <div class="topbar-actions">
+            <button class="icon-btn" type="button" onclick="goToMenu()">Back</button>
+            <button class="icon-btn" type="button" onclick="goToCart()">Cart</button>
+        </div>
+    </header>
+
+    <div id="featured"></div>
+    <section class="results-grid" id="results"></section>
+</main>
+
+<div id="previewModal" class="modal" onclick="handleModalBackdrop(event)">
+    <div class="modal-card">
+        <div class="line-between" style="margin-bottom: 14px;">
+            <div>
+                <span class="eyebrow">Preview</span>
+            </div>
+            <button class="modal-close" type="button" onclick="closePreview()">&times;</button>
+        </div>
+        <div id="previewContent"></div>
+    </div>
+</div>
+
+<script src="app.js"></script>
+<script src="catalog.js"></script>
+<script>
+const username = getUsernameFromQuery();
+
+function getQuery() {
+    const params = new URLSearchParams(window.location.search);
+    return (params.get("q") || "").trim();
+}
+
+function goToMenu() {
+    navigateTo("menu.html");
+}
+
+function goToCart() {
+    if (!username) {
+        window.location.href = "index.html";
+        return;
+    }
+
+    navigateTo("cart.html");
+}
+
+async function addToCart(name, price, category) {
+    if (!username) {
+        throw new Error("Please login to add items to cart");
+    }
+
+    const item = findCatalogItemByName(name);
+    await fetchJson(`${API_BASE_URL}/cart`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            username: username,
+            name: name,
+            price: price,
+            category: category,
+            imageUrl: item ? item.image : ""
+        })
+    });
+}
+
+async function buyNow(name, price, category) {
+    try {
+        await addToCart(name, price, category);
+        navigateTo("cart.html");
+    } catch (error) {
+        alert(error.message || "Unable to add item to cart");
+    }
+}
+
+function openPreview(name, category, price, note) {
+    const item = findCatalogItemByName(name);
+    const imageClass = item && item.name === "Nethili Meen" ? "preview-image zoom-cover-media" : "preview-image";
+    document.getElementById("previewContent").innerHTML = `
+        <div class="preview-grid">
+            <img class="${imageClass}" src="${item ? item.image : ""}" alt="${name}">
+            <div class="stack">
+                <h2 class="featured-name">${name}</h2>
+                <p class="topbar-copy">${item ? item.note : "Fresh seafood packed for quick doorstep delivery."}</p>
+                <div class="meta-row">
+                    <span class="meta-badge">Category: ${category}</span>
+                    <span class="meta-badge">Price: Rs.${price}</span>
+                    <span class="meta-badge">${note}</span>
+                </div>
+                <div class="inline-actions">
+                    <button class="ui-btn primary" type="button" onclick="buyNow('${name}', ${price}, '${category}')">Buy Now</button>
+                    <button class="ui-btn ghost" type="button" onclick="closePreview()">Keep Browsing</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.getElementById("previewModal").classList.add("show");
+}
+
+function closePreview() {
+    document.getElementById("previewModal").classList.remove("show");
+}
+
+function handleModalBackdrop(event) {
+    if (event.target.id === "previewModal") {
+        closePreview();
+    }
+}
+
+function renderFeatured(match, query) {
+    const price = getCatalogPrice(match.i);
+    const featured = document.getElementById("featured");
+    const imageClass = match.item.name === "Nethili Meen" ? "featured-image zoom-cover-media" : "featured-image";
+    featured.innerHTML = `
+        <section class="search-featured">
+            <div class="search-featured-grid">
+                <img class="${imageClass}" src="${match.item.image}" alt="${match.item.name}">
+                <div class="stack">
+                    <span class="eyebrow">Best match</span>
+                    <h2 class="featured-name">${match.item.name}</h2>
+                    <p class="topbar-copy">${match.item.note}</p>
+                    <div class="meta-row">
+                        <span class="meta-badge">Category: ${match.item.category}</span>
+                        <span class="meta-badge">Price: Rs.${price}</span>
+                        <span class="meta-badge">${getCatalogEta(match.i)}</span>
+                    </div>
+                    <div class="inline-actions">
+                        <button class="ui-btn primary" type="button" onclick="buyNow('${match.item.name}', ${price}, '${match.item.category}')">Buy Now</button>
+                        <button class="ui-btn ghost" type="button" onclick="openPreview('${match.item.name}', '${match.item.category}', ${price}, 'Best match for &quot;${query}&quot;')">Preview</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    `;
+}
+
+function renderSearch() {
+    const query = getQuery();
+    const queryLower = query.toLowerCase();
+    const resultsEl = document.getElementById("results");
+    const queryLine = document.getElementById("queryLine");
+    const featuredEl = document.getElementById("featured");
+
+    queryLine.innerText = query ? `Showing matches for "${query}"` : "No search text provided";
+    resultsEl.innerHTML = "";
+    featuredEl.innerHTML = "";
+
+    if (!query) {
+        resultsEl.innerHTML = `<div class="empty-card"><h3 class="product-name">Search from the menu page</h3><p class="topbar-copy">Enter a fish or seafood name to see matching products here.</p></div>`;
+        return;
+    }
+
+    const matches = BITE_CATALOG
+        .map((item, i) => {
+            const name = item.name.toLowerCase();
+            const idx = name.indexOf(queryLower);
+            return { item, i, idx };
+        })
+        .filter((entry) => entry.idx !== -1)
+        .sort((a, b) => {
+            if (a.idx !== b.idx) {
+                return a.idx - b.idx;
+            }
+            return a.item.name.length - b.item.name.length;
+        });
+
+    if (!matches.length) {
+        resultsEl.innerHTML = `<div class="empty-card"><h3 class="product-name">No items found</h3><p class="topbar-copy">Try another fish, prawn, crab, or squid name from the BiteBuddy menu.</p></div>`;
+        return;
+    }
+
+    renderFeatured(matches[0], query);
+
+    matches.slice(1).forEach((match) => {
+        const price = getCatalogPrice(match.i);
+        const imageClass = match.item.name === "Nethili Meen" ? "zoom-cover-media" : "";
+        const card = document.createElement("article");
+        card.className = "search-card";
+        card.innerHTML = `
+            <img class="${imageClass}" src="${match.item.image}" alt="${match.item.name}">
+            <div class="search-card-body">
+                <h3 class="product-name">${match.item.name}</h3>
+                <p class="meta-copy">${match.item.note}</p>
+                <div class="meta-row">
+                    <span class="meta-badge">${match.item.category}</span>
+                    <span class="meta-badge">${getCatalogEta(match.i)}</span>
+                </div>
+                <div class="line-between">
+                    <span class="product-price">Rs.${price}</span>
+                    <button class="ui-btn ghost" type="button" onclick="openPreview('${match.item.name}', '${match.item.category}', ${price}, 'Matched for &quot;${query}&quot;')">Preview</button>
+                </div>
+            </div>
+        `;
+        resultsEl.appendChild(card);
+    });
+}
+
+renderSearch();
+</script>
+</body>
+</html>
