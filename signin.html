@@ -121,6 +121,7 @@ document.getElementById("signupForm").addEventListener("submit", async function 
     signupError.style.display = "none";
 
     if (allKnownUsers.some((user) => ((user.username || user.user || "").trim().toLowerCase() === username))) {
+        signupError.textContent = "Username already exists";
         signupError.style.display = "block";
         return;
     }
@@ -135,13 +136,15 @@ document.getElementById("signupForm").addEventListener("submit", async function 
         });
 
         if (!response.ok) {
-            throw new Error("Signup failed");
+            const errorText = (await response.text()).trim();
+            throw new Error(errorText || "Signup failed");
         }
 
         window.location.href = "index.html";
     } catch (error) {
         console.log("Error:", error);
-        alert("Signup failed. Please try again.");
+        signupError.textContent = error.message || "Signup failed. Please try again.";
+        signupError.style.display = "block";
     }
 });
 
